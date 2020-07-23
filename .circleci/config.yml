@@ -253,7 +253,9 @@ commands:
           command: |
             author=$(git show -s --format='%an')
             email=$(git show -s --format='%ae')
-            gh_text="Github Commit <https://github.com/${CIRCLE_PROJECT_USERNAME}/${CIRCLE_PROJECT_REPONAME}/commit/${CIRCLE_SHA1}|${CIRCLE_SHA1:0:8}> by ${author} <${email}>"
+            rel_time=$(git show -s --format='%cr')
+            abs_time=$(git show -s --format='%cd')
+            gh_text="<https://github.com/${CIRCLE_PROJECT_USERNAME}/${CIRCLE_PROJECT_REPONAME}/commit/${CIRCLE_SHA1}|${CIRCLE_SHA1:0:8}> by ${author} <${email}> ${rel_time} (${abs_time})"
 
             pretext="Job \`${CIRCLE_JOB}\` #${CIRCLE_BUILD_NUM} on branch \`${CIRCLE_BRANCH}\` of ${CIRCLE_PROJECT_USERNAME}/${CIRCLE_PROJECT_REPONAME} failed. Check the <${CIRCLE_BUILD_URL}|build logs> for details."
             color="#8b0902"
@@ -314,17 +316,21 @@ commands:
           command: |
             author=$(git show -s --format='%an')
             email=$(git show -s --format='%ae')
-            gh_text="Github Commit <https://github.com/${CIRCLE_PROJECT_USERNAME}/${CIRCLE_PROJECT_REPONAME}/commit/${CIRCLE_SHA1}|${CIRCLE_SHA1:0:8}> by ${author} <${email}>"
+            rel_time=$(git show -s --format='%cr')
+            abs_time=$(git show -s --format='%cd')
+            gh_text="<https://github.com/${CIRCLE_PROJECT_USERNAME}/${CIRCLE_PROJECT_REPONAME}/commit/${CIRCLE_SHA1}|${CIRCLE_SHA1:0:8}> by ${author} <${email}> ${rel_time} (${abs_time})"
 
             if [ -f ${MAGMA_ROOT}/circleci/<< parameters.version_path >> ]; then
               ver=$(cat ${MAGMA_ROOT}/circleci/<< parameters.version_path >>)
             else
-              ver="Unknown artifact version"
+              ver="Unknown artifact version (this should never happen!)"
             fi
+
+            pretext="Production artifact has been published. Promote or deploy it by following the appropriate oncall procedures."
 
             slack_data=$(cat \<<EOF
             {
-              "text": "*Artifact << parameters.artifact_name >> was Published!*",
+              "text": "*<< parameters.artifact_name >> Artifact Has Been Published*",
               "attachments": [
                 {
                   "color": "#36a64f",
@@ -333,7 +339,7 @@ commands:
                   "fields": [
                     {
                       "title": "Artifact Version",
-                      "value": "${ver}",
+                      "value": "\`${ver}\`",
                       "short": false
                     },
                     {
@@ -419,7 +425,7 @@ jobs:
             python3 build.py -a --nocache --parallel
       - tag-push-docker:
           project: orc8r
-          images: "nginx|controller|prometheus-configurer|alertmanager-configurer"
+          images: "nginx|controller"
       - persist-githash-version:
           file_prefix: orc8r
       - notify-magma:
