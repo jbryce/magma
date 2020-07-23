@@ -138,11 +138,6 @@ commands:
         type: boolean
     steps:
       - run: |
-          if [ "${CIRCLE_BRANCH}" != "master" ] then
-            echo "Push only happens for master branch"
-            exit 0
-          fi
-
           DOCKER_REGISTRY="<< parameters.registry >>"
           DOCKER_USERNAME="<< parameters.username >>"
           DOCKER_PASSWORD="<< parameters.password >>"
@@ -317,10 +312,6 @@ commands:
       - run:
           name: Send slack message
           command: |
-            if [ "${CIRCLE_BRANCH}" != "master" ]; then
-              exit 0
-            fi
-
             author=$(git show -s --format='%an')
             email=$(git show -s --format='%ae')
             gh_text="Github Commit <https://github.com/${CIRCLE_PROJECT_USERNAME}/${CIRCLE_PROJECT_REPONAME}/commit/${CIRCLE_SHA1}|${CIRCLE_SHA1:0:8}> by ${author} <${email}>"
@@ -778,10 +769,8 @@ workflows:
   agw:
     jobs:
       - lte-test
-      - lte-integ-test:
-          <<: *only_master
+      - lte-integ-test
       - lte-agw-deploy:
-          <<: *only_master
           requires:
             - lte-integ-test
 
@@ -795,10 +784,8 @@ workflows:
   cwag:
     jobs:
       - cwag-precommit
-      - cwf-integ-test:
-          <<: *only_master
+      - cwf-integ-test
       - cwag-deploy:
-          <<: *only_master
           requires:
             - cwag-precommit
             - cwf-integ-test
